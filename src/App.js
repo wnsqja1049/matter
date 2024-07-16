@@ -1,25 +1,36 @@
-import logo from './logo.svg';
-import './App.css';
+import * as React from "react";
+import {
+	Engine,
+	RenderClones,
+	Walls,
+	Rectangle,
+	Circle,
+	Constraint,
+	
+} from "react-matter-js";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+const App = () => {
+	const width = 600;
+	const height = 400;
+	return (
+		<Engine options={{}}>
+			<RenderClones
+				enableMouse
+				options={{
+					width,
+					height,
+					background: "transparent",
+					wireframeBackground: "transparent"
+				}}>
+				<Walls x={0} y={0} width={width} height={height} wallWidth={25} />
+				<Circle clone x={100} y={100} radius={50} />
+				<Constraint>
+					<Circle clone x={100} y={100} radius={50} />
+					<Rectangle clone x={300} y={100} width={100} height={100} />
+				</Constraint>
+			</RenderClones>
+		</Engine>
+	);
+};
 
 export default App;

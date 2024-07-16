@@ -1,0 +1,11 @@
+.container {
+  display: flex;
+  width: auto;
+  max-width: 100%;
+}
+
+.container div {
+  background-color: #000;
+  width: 400px;
+  height: 600px;
+}
