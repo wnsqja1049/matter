@@ -6,16 +6,16 @@ export default function NewTextApp() {
 	const containerRef = useRef(null);
 	const canvasRef = useRef(null);
 
-	const engine = Matter.Engine.create();
-	const world = engine.world;
-
 	const Engine = Matter.Engine;
 	const Render = Matter.Render;
 	const Runner = Matter.Runner;
 	const World = Matter.World;
 	const Bodies = Matter.Bodies;
+	const Composite = Matter.Composite;
+	const Composites = Matter.Composites;
 	const Mouse = Matter.Mouse;
 	const MouseConstraint = Matter.MouseConstraint;
+	const Events = Matter.Events;
 
 	var ceil;
 	var floor;
@@ -23,6 +23,9 @@ export default function NewTextApp() {
 	var rightWall;
 
 	useEffect(() => {
+
+		const engine = Engine.create();
+		const world = engine.world;
 
 		const render = Render.create({
 			element: containerRef.current,
@@ -35,6 +38,14 @@ export default function NewTextApp() {
 				wireframes: false  // optional: makes shapes solid
 			}
 		});
+
+		// Run the renderer
+		Render.run(render);
+
+
+		var runner = Runner.create();
+		Runner.run(runner, engine);
+
 
 		// Add some bodies
 		const boxA = Bodies.circle(400, 300, 80, {
@@ -69,14 +80,6 @@ export default function NewTextApp() {
 
 		World.add(world, [boxA, boxB, floor, ceil, leftWall, rightWall]);
 
-		// Run the engine
-		Engine.run(engine);
-
-		// Run the renderer
-		Render.run(render);
-
-		var runner = Runner.create();
-		Runner.run(runner, engine);
 
 		engine.gravity.y = 0.6;
 
@@ -91,8 +94,22 @@ export default function NewTextApp() {
 				}
 			}
 		});
-		World.add(world, mouseConstraint);
 
+		Composite.add(world, mouseConstraint);
+		//World.add(world, mouseConstraint);
+		
+		render.mouse = mouse;
+
+		mouse.element.removeEventListener("mousewheel", mouse.mousewheel);
+		mouse.element.removeEventListener("DOMMouseScroll", mouse.mousewheel);
+
+		render.canvas.addEventListener('scroll', () => {
+			console.log('scroll');
+			window.scrollTo(0, 100);
+		});
+
+		// Run the engine
+		Engine.run(engine);
 
 		// Adjust canvas size on window resize
 		const handleResize = () => {
@@ -130,6 +147,12 @@ export default function NewTextApp() {
 			Render.run(render);
 		};
 
+		// canvasRef.current.addEventListener('wheel', ()=>{
+		// 	console.log('here')
+		// 	//window.scrollTo(window.scrollX, window.scrollY + 100)
+		// });
+		//window.addEventListener('wheel', ()=>{console.log(mouseConstraint.mouse.wheelDelta)});
+
 		window.addEventListener('resize', handleResize);
 
 		return () => {
@@ -138,13 +161,29 @@ export default function NewTextApp() {
 	}, []);
 
 	return (
-		<>
-			<div ref={containerRef} style={{border:'solid red 1px'}}>
-				<canvas ref={canvasRef} />
+		<div>
+			<div ref={containerRef} style={{
+				border:'solid red 1px',
+				position:'absolute',
+				top:0,
+				left:0,
+				width:'100%',
+				height:'100%',
+				//pointerEvents:'none',
+				//overflow:'scroll'
+			}}>
+				<canvas id="id_canvas" ref={canvasRef} />
 			</div>
-			<div style={{width:'300px', height:'1000px'}}>
-
+			<div style={{width:'500px', height:'1000px'}}>
+				<canvas style={{border:'solid red 4px',
+					marginTop:'1000px',
+					width:'300px',
+					height:'300px',
+					'pointerEvents':'none'
+				}}>
+				</canvas>
+				<button onClick={()=>{window.scrollTo(0,0)}}>top</button>
 			</div>
-		</>
+		</div>
 	)
 }
