@@ -7,10 +7,11 @@ import TextApp from './TextApp';
 import NewTextApp from './NewTextApp';
 import reportWebVitals from './reportWebVitals';
 import ResizeTestApp from './ResizeTestApp';
+import Subak from './Subak';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-    <ResizeTestApp />
+    <Subak />
 );
 
 // If you want to start measuring performance in your app, pass a function

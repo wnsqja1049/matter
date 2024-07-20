@@ -103,11 +103,6 @@ export default function NewTextApp() {
 		mouse.element.removeEventListener("mousewheel", mouse.mousewheel);
 		mouse.element.removeEventListener("DOMMouseScroll", mouse.mousewheel);
 
-		render.canvas.addEventListener('scroll', () => {
-			console.log('scroll');
-			window.scrollTo(0, 100);
-		});
-
 		// Run the engine
 		Engine.run(engine);
 
@@ -147,12 +142,6 @@ export default function NewTextApp() {
 			Render.run(render);
 		};
 
-		// canvasRef.current.addEventListener('wheel', ()=>{
-		// 	console.log('here')
-		// 	//window.scrollTo(window.scrollX, window.scrollY + 100)
-		// });
-		//window.addEventListener('wheel', ()=>{console.log(mouseConstraint.mouse.wheelDelta)});
-
 		window.addEventListener('resize', handleResize);
 
 		return () => {
@@ -163,26 +152,13 @@ export default function NewTextApp() {
 	return (
 		<div>
 			<div ref={containerRef} style={{
-				border:'solid red 1px',
 				position:'absolute',
 				top:0,
 				left:0,
 				width:'100%',
 				height:'100%',
-				//pointerEvents:'none',
-				//overflow:'scroll'
 			}}>
 				<canvas id="id_canvas" ref={canvasRef} />
-			</div>
-			<div style={{width:'500px', height:'1000px'}}>
-				<canvas style={{border:'solid red 4px',
-					marginTop:'1000px',
-					width:'300px',
-					height:'300px',
-					'pointerEvents':'none'
-				}}>
-				</canvas>
-				<button onClick={()=>{window.scrollTo(0,0)}}>top</button>
 			</div>
 		</div>
 	)

@@ -1,7 +1,6 @@
 import "./styles.css";
 import { useEffect, useRef } from "react";
 import Matter from "matter-js";
-import PathSeg from "pathseg";
 
 export default function MatterTest() {
 	const Engine = Matter.Engine;
