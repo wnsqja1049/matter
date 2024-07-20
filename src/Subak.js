@@ -1,53 +1,67 @@
 import "./Subak.css";
 import { useState, useEffect, useRef } from "react";
-import Matter, { Sleeping } from "matter-js";
+import Matter from "matter-js";
 
 export default function Subak() {
 
 	const [ testFruitIndex, setTestFruitIndex ] = useState({ now: Math.floor(Math.random() * 5), next: Math.floor(Math.random() * 5) });
 	const [ gameOver, setGameOver ] = useState(false);
-	const [ score, setScore ] = useState(false);
+	const [ score, setScore ] = useState(0);
 
 	const containerRef = useRef(null);
 	const canvasRef = useRef(null);
 	const fruitIndexRef = useRef(testFruitIndex);
 	const gameOverRef = useRef(gameOver);
 	const worldRef = useRef(world);
+	const scoreRef = useRef(score);
 
 	const Engine = Matter.Engine;
 	const Render = Matter.Render;
 	const Runner = Matter.Runner;
 	const World = Matter.World;
 	const Bodies = Matter.Bodies;
-	const Composite = Matter.Composite;
-	const Composites = Matter.Composites;
 	const Mouse = Matter.Mouse;
-	const MouseConstraint = Matter.MouseConstraint;
 	const Events = Matter.Events;
 
-	var world;
+	//Matter 오브젝트
 	var engine;
 	var render;
 	var runner;
+	var world;
 
+	//맵 오브젝트
 	var ceil;
 	var floor;
 	var leftWall;
 	var rightWall;
 
-	var currentFruit;
-
-	const canvasWidth = 400;
-	const canvasHeight = 800;
-
-	var spawnX = 200;
-	var spawnY = 100;
-	var ceilY = 200;
-
-	var ratio = 1.85;
 	var wallSize = 100;
 
-	var fruits = [];
+	var currentFruit;
+
+	//맵 크기
+	const canvasWidth = 400;
+	const canvasHeight = 800;
+	
+	//상한선 높이 설정
+	var ceilY = 200;
+
+	//과일 떨어트리는 위치
+	var spawnX = 200;
+	var spawnY = 100;
+
+	//전체 과일 크기 비율 설정
+	var ratio = 0.85;
+
+	//반발력
+	var restitution = 0.2;
+
+	//마찰력
+	var frictionStatic = 0.1;
+	var friction = 0.01;
+
+	//중력
+	var gravity = 0.4;
 
 	const fruitList = [
 		{ src: 'fruit-1.png',  radius: 16 * ratio,  scale: 0.32 * ratio },
@@ -55,15 +69,24 @@ export default function Subak() {
 		{ src: 'fruit-3.png',  radius: 32 * ratio,  scale: 0.48 * ratio },
 		{ src: 'fruit-4.png',  radius: 40 * ratio,  scale: 0.62 * ratio },
 		{ src: 'fruit-5.png',  radius: 48 * ratio,  scale: 0.64 * ratio },
-		{ src: 'fruit-6.png',  radius: 56 * ratio,  scale: 0.88 * ratio },
+		{ src: 'fruit-6.png',  radius: 56 * ratio,  scale: 0.86 * ratio },
 		{ src: 'fruit-7.png',  radius: 64 * ratio,  scale: 1.00 * ratio },
 		{ src: 'fruit-8.png',  radius: 72 * ratio,  scale: 1.08 * ratio },
 		{ src: 'fruit-9.png',  radius: 80 * ratio,  scale: 1.18 * ratio },
 		{ src: 'fruit-10.png', radius: 100 * ratio, scale: 1.42 * ratio },
 		{ src: 'fruit-11.png', radius: 140 * ratio, scale: 2.08 * ratio },
 	]
+	const scoreList = [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66];
 
 
+	const createEngine = () => {
+		var engine = Engine.create({
+			enableSleeping: true,
+		});
+		engine.gravity.y = gravity;
+
+		return engine;
+	}
 	const createRender = (engine) => {
 		var render = Render.create({
 			element: containerRef.current,
@@ -91,16 +114,11 @@ export default function Subak() {
 		World.add(world, [floor, ceil, leftWall, rightWall]);
 	}
 
-
 	useEffect(() => {
 
-		engine = Engine.create({
-			enableSleeping: true,
-		});
-		engine.gravity.y = 0.6;
-		
-		runner = Runner.create();
+		engine = createEngine();
 		render = createRender(engine);
+		runner = Runner.create();
 
 		Render.run(render);
 		Runner.run(engine);
@@ -112,6 +130,9 @@ export default function Subak() {
 		currentFruit = Bodies.circle(spawnX, spawnY, fruitList[testFruitIndex.now].radius,
 			{
 				label: 'sensor',
+				isSensor: true,
+				label: fruitIndexRef.current.now,
+				isStatic: true,
 				render: {
 					sprite: {
 						texture: `/subak/${fruitList[testFruitIndex.now].src}`,
@@ -131,40 +152,23 @@ export default function Subak() {
 			for (var i = 0, j = pairs.length; i != j; ++i) {
 				var pair = pairs[i];
 	
-				if(pair.bodyA === currentFruit || pair.bodyB === currentFruit) {
-					console.log('currentFruit')
-				} else {
-					if(pair.bodyA.label === pair.bodyB.label) {
-						console.log('same')
+				if (pair.bodyA !== currentFruit && pair.bodyB !== currentFruit) {
+					if (pair.bodyA.label === pair.bodyB.label) {
+						if (pair.bodyA.label !== 10 && pair.bodyB.label !== 10) {
 
-						fruits.forEach((fruit, index) => {
-							if(fruit === pair.bodyA) {
-								fruits.splice(index, 1);
-							}
-							if(fruit === pair.bodyB) {
-								fruits.splice(index, 1);
-							}
-						});
+							World.remove(world, [pair.bodyA, pair.bodyB]);
 
-						World.remove(world, [pair.bodyA, pair.bodyB]);
-	
-						let index = pair.bodyB.label + 1;
-	
-						let posX = pair.collision.supports[0].x;
-						let posY = pair.collision.supports[0].y;
-	
-						let fruit = Bodies.circle(posX, posY, fruitList[index].radius, { label:index, render: { sprite: { texture: `/subak/${fruitList[index].src}`,  xScale: fruitList[index].scale, yScale: fruitList[index].scale }}});
-						
-						fruits.push(fruit);
+							scoreRef.current = scoreRef.current += scoreList[pair.bodyA.label]
+							setScore(scoreRef.current)
 
-						Events.on(fruit, "sleepStart", (event) => {
-							if(event.source.position.y - event.source.circleRadius < ceilY) {
-								setGameOver(true);
-								gameOverRef.current = true;
-							}
-						})
+							let index = pair.bodyB.label + 1;
 
-						World.add(world, fruit);
+							let posX = pair.collision.supports[0].x;
+							let posY = pair.collision.supports[0].y;
+
+							let fruit = createNewFruit(posX, posY, index);
+							World.add(world, fruit);
+						}
 					}
 				}
 			}
@@ -214,33 +218,12 @@ export default function Subak() {
 		if(gameOverRef.current) {
 			return;
 		}
-
-		let fruit = Bodies.circle(event.x, spawnY, fruitList[fruitIndexRef.current.now].radius,
-			{
-				label: fruitIndexRef.current.now,
-				render: {
-					sprite: {
-						texture: `/subak/${fruitList[fruitIndexRef.current.now].src}`,
-						xScale: fruitList[fruitIndexRef.current.now].scale,
-						yScale: fruitList[fruitIndexRef.current.now].scale
-					}
-				}
-			}
-		);
-		fruits.push(fruit);
 		
-		Events.on(fruit, "sleepStart", (event) => {
-			if(event.source.position.y - event.source.circleRadius < ceilY) {
-				setGameOver(true);
-				gameOverRef.current = true;
-			}
-		})
-
+		let fruit = createNewFruit(event.x, spawnY, fruitIndexRef.current.now);
 		World.add(world, fruit);
 
-		let randomIndex = Math.floor(Math.random() * 5)
-		setTestFruitIndex({ now: fruitIndexRef.current.next, next: randomIndex });
-		fruitIndexRef.current = { now: fruitIndexRef.current.next, next: randomIndex };
+		fruitIndexRef.current = { now: fruitIndexRef.current.next, next: Math.floor(Math.random() * 5) };
+		setTestFruitIndex(fruitIndexRef.current);
 
 		World.remove(world, currentFruit);
 
@@ -263,20 +246,47 @@ export default function Subak() {
 		World.add(world, currentFruit);
 	}
 
+	const createNewFruit = (x, y, index) => {
+		var newFruit = Bodies.circle(x, y, fruitList[index].radius, {
+			label: index,
+			restitution: restitution,
+			frictionStatic: frictionStatic,
+			friction: friction,
+			render: {
+				sprite: {
+					texture: `/subak/${fruitList[index].src}`,
+					xScale: fruitList[index].scale,
+					yScale: fruitList[index].scale
+				}
+			}
+		})
+
+		Events.on(newFruit, "sleepStart", (event) => {
+			if(event.source.position.y - event.source.circleRadius < ceilY) {
+				gameOverRef.current = true;
+				setGameOver(true);
+			}
+		})
+
+		return newFruit;
+	}
+
 	const retry = () => {
 		let randomNow = Math.floor(Math.random() * 5)
 		let randomNext = Math.floor(Math.random() * 5)
 
-		setTestFruitIndex({ now: randomNow, next: randomNext });
 		fruitIndexRef.current = { now: randomNow, next: randomNext };
+		setTestFruitIndex(fruitIndexRef.current);
 
 		World.clear(worldRef.current, true);
-		setGameOver(false);
 		gameOverRef.current = false;
+		setGameOver(false);
+
+		scoreRef.current = 0
+		setScore(0)
 	}
 
-
-	const fruitPanel = () => {
+	const fruitListUi = () => {
 		return (
 			<div className="fruit-list-ui">
 				<img src="/subak/fruit-1.png"></img>
@@ -311,22 +321,21 @@ export default function Subak() {
 						<p>NOW : </p>
 						<img src={`/subak/fruit-${testFruitIndex.now + 1}.png`}></img>
 					</div>
+
+					<div className="score-ui">
+						<p>점수 : {score.toString()}</p>
+					</div>
 				</div>
 
 				{gameOverRef.current ? 
 				<div className={`gameover-ui`}>
-					<p className="title">GAME OVER</p>
+					<p>GAME OVER</p>
+					<p>점수 : {score.toString()}</p>
 					<button onClick={()=>{retry()}}>RETRY</button>
-				</div> : <></>
-				}
+				</div> : <></>}
 
-				{fruitPanel()}
+				{fruitListUi()}
 			</div>
-			<div>{gameOverRef.current.toString()}</div>
-			<div>{gameOver.toString()}</div>
-			<div>할일 : 수박 만들면 클리어 조건 추가</div>
-			<div>할일 : 스코어 추가</div>
-			<button onClick={()=>{retry()}}>RETRY</button>
 		</div>
 	)
 }

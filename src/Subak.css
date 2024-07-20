@@ -36,7 +36,20 @@
 	margin-bottom: 10px;
 }
 
+.score-ui {
+	position: absolute;
+	top:50px;
+	width: 400px;
 
+	user-select: none;
+	pointer-events: none;
+}
+
+.score-ui p {
+	font-size: 16px;
+	color: white;
+	text-align: center;
+}
 
 .gameover-ui {
 	position: absolute;
@@ -60,7 +73,7 @@
 }
 .gameover-ui button {
 	width: 100px;
-	margin-top: 50px;
+	margin-top: 20px;
 	background-color: transparent;
 	border-radius: 4px;
 	border: solid white 2px;
